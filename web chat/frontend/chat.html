@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.4/css/bulma.min.css" />
+
+</head>
+
+<body>
+    <main class="main" style="margin:0 auto; max-width: 1000px">
+
+        <div class="container py-3 px-0">
+
+            <input type="button" value="Clear Chat" class="button mb-2" id="clear">
+
+            <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth py-3" id="messagesTable">
+                <thead>
+                    <th>Message</th>
+                    <th>Sender</th>
+                    <th>Receiver</th>
+                    <th>Time</th>
+                </thead>
+                <tbody>
+
+
+                </tbody>
+
+
+            </table>
+
+
+            <input type="text" class="input is-rounded mb-4" id="messageBox">
+            <input type="button" value="Send" class="button" id="sendMessage">
+        </div>
+
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const user_name = urlParams.get('user_name')
+
+            $(document).ready(function () {
+
+                $("#messageBox").keypress(function (event) {
+                    if (event.which === 13) {
+                        event.preventDefault();
+                        $("#sendMessage").click();
+                    }
+                });
+
+
+                $('#sendMessage').click(function () {
+                    var message = $('#messageBox').val();
+
+                    $.ajax({
+                        method: 'POST',
+                        url: '../backend/send_message.php',
+                        data: {
+                            user_name: user_name,
+                            message: message
+                        }
+                    }).done(function (data) {
+                        data = JSON.parse(data);
+                        console.log(data);
+                        $('#messageBox').val('');
+                    });
+
+
+                });
+
+                setInterval(function () {
+                    $.ajax({
+                        method: 'POST',
+                        url: '../backend/get_messages.php',
+                        data: {
+                            user_name: user_name
+                        }
+                    }).done(function (data) {
+
+                        data = JSON.parse(data);
+                        // Process the received data
+
+                        console.log(data);
+                        var messagesTable = $('#messagesTable');
+
+                        $('#messagesTable tbody tr').remove();
+
+                        $.each(data, function (key, value) {
+                            var row = $('<tr>');
+                            console.log(value);
+                            row.append($('<td>').text(value.message));
+                            row.append($('<td>').text(value.sender));
+                            row.append($('<td>').text(value.receiver));
+                            row.append($('<td>').text(value.time));
+
+                            messagesTable.append(row);
+
+                        });
+
+
+                    });
+                }, 2000); // Adjust the interval (in milliseconds) based on your requirements
+
+
+                $('#clear').click(function () {
+
+                    $.ajax({
+                        method: 'POST',
+                        url: '../backend/clear_messages.php',
+                    }).done(function (data) {
+                        console.log(data);
+                    })
+                });
+            });
+
+
+        </script>
+
+
+    </main>
+
+</body>
+
+</html>
